@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><title>relay</title>
+<script>
+addEventListener('message', async e => {
+  const {id, url} = e.data || {};
+  if (!url || !/^https:\/\/raw\.githubusercontent\.com\/domjvitale\/kevi-reel\//.test(url)) return;
+  try {
+    const r = await fetch(url); const b = await r.blob();
+    e.source.postMessage({id, ok: r.ok, blob: b}, '*');
+  } catch (err) { e.source.postMessage({id, ok: false, err: String(err)}, '*'); }
+});
+parent.postMessage({ready: true}, '*');
+</script>
