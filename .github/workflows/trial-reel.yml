@@ -1,0 +1,43 @@
+name: Trial reel Instagram
+
+on:
+  schedule:
+    - cron: '29 17 * * *'   # 18:29 ora italiana (inverno)
+  workflow_dispatch:
+    inputs:
+      count:
+        description: 'Quanti reel pubblicare'
+        default: '3'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trial-reel
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pubblica trial reel
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          COUNT: ${{ github.event.inputs.count || '3' }}
+          GRADUATION: SS_PERFORMANCE
+        run: node scripts/publish-trial.mjs
+      - name: Commit calendario
+        if: always()
+        run: |
+          git config user.name "kevi-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add calendario.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Trial reel pubblicati $(date -u +%F)"
+          git pull --rebase && git push
